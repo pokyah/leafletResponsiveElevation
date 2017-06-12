@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8' />
+
+  <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+  <title>LDLV | Parcours d'entrainement</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Leaflet CSS -->
+
+  <!-- Leaflet JS -->
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
+  <link href='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css' rel='stylesheet' />
+
+  <!-- Added for leaflet.Elevation -->
+  <link rel="stylesheet" href="dist/Leaflet.Elevation-0.0.2.css" />
+  <script type="text/javascript" src="dist/Leaflet.Elevation-0.0.2.min.js"></script>
+  <!-- Less Stylesheet -->
+  <!--<link rel="stylesheet/less" type="text/css" href="styles.less" />-->
+  <script src="dist/less.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="css/el.css" />
+  <!-- Added for maki icons-->
+  <script src="dist/Leaflet.MakiMarkers.js"></script>
+  <!--<script src="Leaflet.MakiMarkers.js"></script>-->
+  <!-- JQuery -->
+  <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  <!-- Added for omnivore -->
+  <script src="src/leaflet.geometryutil.js" type="text/javascript"></script>
+  <script src="src/leaflet-distance-marker.js" type="text/javascript"></script>
+  <!-- ACSS for map div -->
+  <style>
+  html, body, #map {
+    height:100%;
+    width:100%;
+    padding:0px;
+    margin:0px;
+  }
+  .info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+  }
+  .info h4 {
+    margin: 0 0 5px;
+    color: #777;
+  }
+  .dist-marker {
+    font-size: 12px;
+    text-align: center;
+    color: #505050;
+    text-shadow: 2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff, 1px 1px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+  }
+  .menu-ui {
+    background:#fff;
+    position:absolute;
+    top:10%;right:10px;
+    z-index:1;
+    border-radius:3px;
+    width:112px;
+    border:1px solid rgba(0,0,0,0.4);
+  }
+  .menu-ui a {
+    font-size:16px;
+    color:#404040;
+    display:block;
+    margin:10;padding:10;
+    padding:15px 20px;
+    text-decoration:none;
+    border-bottom:1px solid rgba(0,0,0,0.25);
+    text-align:center;
+  }
+  .menu-ui a:first-child {
+    border-radius:3px 3px 0 0;
+  }
+  .menu-ui a:last-child {
+    border:none;
+    border-radius:0 0 3px 3px;
+  }
+  .menu-ui a:hover {
+    background:#f8f8f8;
+    color:#404040;
+  }
+  .menu-ui a.active {
+    background:#3887BE;
+    color:#FFF;
+  }
+  .menu-ui a.active:hover {
+    background:#3074a4;
+  }
+
+  #map {
+    height:60%;
+  }
+
+  #elCont{
+    height:40%;
+    width:100%;
+  }
+
+</style>
+</head>
+<body>
+  <div id="map"></div>
+  <nav class='menu-ui' id="box-ui">
+    <a href='#' id='hiver' class=''>hiver</a>
+    <a href='#' id='ete' class=''>ete</a>
+  </nav>
+  <div id="elContainer"></div>
+  <script type="text/javascript">
+    <!-- Add MapBox tiles -->
+    /*L.mapbox.accessToken = 'pk.eyJ1IjoidGdvb3NzZW4iLCJhIjoiY2lvMWdtMWRoMDB4eHdka2w3NmZqYnc2eCJ9.m-LmO4634t2nlcsDm1Lndw';
+    var map = L.mapbox.map('map', null, {
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+        '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+        'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        id: 'lucamoiana.jc4a9gcl'
+    }).setView([50.90795, 4.3935], 14);*/
+    L.mapbox.accessToken = 'pk.eyJ1IjoidGdvb3NzZW4iLCJhIjoiY2lvMWdtMWRoMDB4eHdka2w3NmZqYnc2eCJ9.m-LmO4634t2nlcsDm1Lndw';
+
+    var map = L.mapbox.map('map', null, {
+        maxZoom: 18
+    }).setView([50.90795, 4.3935], 14);
+
+    var layers = {
+        Streets: L.mapbox.tileLayer('mapbox.streets'),
+        Outdoors: L.mapbox.tileLayer('mapbox.outdoors'),
+        Satellite: L.mapbox.tileLayer('mapbox.satellite'),
+        Urbis: L.tileLayer.wms("http://geoserver.gis.irisnet.be/urbis/wms/gwc"+ Math.random() + "&", {
+            layers: 'urbisFR',
+            format: 'image/png',
+            transparent: true,
+            attribution: "Realized by means of Brussels UrbIS © ®"
+        })
+    };
+
+    var baseMaps = {
+        "Fond de plan": layers.Streets
+    };
+
+    var pluie = L.tileLayer.wms('http://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?', {
+        layers: 'RADNL_OPER_R___25PCPRR_L3_COLOR',
+        format: 'image/png',
+        transparent: true,
+        attribution: "Realized by means of Brussels UrbIS © ®"
+    });
+
+    var overlayMaps = {
+      "precipitations": pluie
+    }
+
+    var onem = setInterval(onem, 2000);
+
+    function onem() {
+        // Make sure to change the URL template, otherwise the browser will use its cache, even though
+        // Leaflet re-builds its tiles.
+        pluie.setUrl("http://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?" + Math.random() + "&");
+        pluie.redraw();
+    };
+
+    layers.Streets.addTo(map);
+
+    L.control.layers(layers, overlayMaps,{collapsed:true}).addTo(map);
+  /*tests to dev*/
+    //L.control.layers.overlay.on("click", function (event) {
+    // Assuming the clicked feature is a shape, not a point marker.
+    //map.fitBounds(event.layer.getBounds());
+    //});
+
+    map.on('overlayadd', function(e) {
+      console.log('event fired !' );
+      map.setView([50.90795, 4.3935], 7);
+    });
+
+    map.on('overlayadd', function(e) {
+      console.log('event fired !' );
+      map.setView([50.90795, 4.3935], 7);
+    });
+
+
+  /*end test to dev*/
+
+    <!-- Create groups --!>
+    var tourHiver = new L.LayerGroup();
+    var tourEte = new L.LayerGroup();
+    <!--Create an elevation profile using leafletjs.elevation -->
+    //all used options are the default values
+    var el1 = L.control.elevation({
+      // id : 'elevation1',
+      position: "bottomleft",
+      //theme: "lime-theme", //default: lime-theme
+      width: $('#elContainer').outerWidth(),
+      height: 125,
+      margins: {
+        top: 10,
+        right: 20,
+        bottom: 30,
+        left: 50
+      },
+      useHeightIndicator: true, //if false a marker is drawn at map position
+      interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
+      hoverNumber: {
+        decimalsX: 1, //decimals on distance (always in km)
+        decimalsY: 1, //deciamls on height (always in m)
+        formatter: undefined //custom formatter function may be injected
+      },
+      xTicks: undefined, //number of ticks in x axis, calculated by default according to width
+      yTicks: undefined, //number of ticks on y axis, calculated by default according to height
+      collapsed: false //collapsed mode, show chart on click or mouseover
+    });
+    // el1.addTo(tourHiver);
+    var el2 = L.control.elevation({
+      position: "bottomleft",
+      width: $('#elContainer').outerWidth(),
+      height: 125,
+      margins: {
+        top: 10,
+        right: 20,
+        bottom: 30,
+        left: 50
+      },
+      useHeightIndicator: true, //if false a marker is drawn at map position
+      interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
+      hoverNumber: {
+        decimalsX: 1, //decimals on distance (always in km)
+        decimalsY: 1, //deciamls on height (always in m)
+        formatter: undefined //custom formatter function may be injected
+      },
+      xTicks: undefined, //number of ticks in x axis, calculated by default according to width
+      yTicks: undefined, //number of ticks on y axis, calculated by default according to height
+      collapsed: false //collapsed mode, show chart on click or mouseover
+    });
+    // el2.addTo(map);
+    <!--Added track from external geojson -->
+    var hiverStyle = {
+      "color": "#FEFF88",
+      "weight": 3.5,
+      "opacity": 0.8,
+      "lineCap": "round",
+    };
+    var hiverparcours;
+    $.getJSON("data/hiver.geojson", function(json) {
+      hiverparcours = L.geoJson(json,
+      {
+        style: hiverStyle, onEachFeature: el1.addData.bind(el1) //working on a better solution
+      }
+      ).addTo(tourHiver);
+    });
+    var eteStyle = {
+      "color": "#FE9018",
+      "weight": 3.5,
+      "opacity": 0.8,
+      "lineCap": "round",
+    };
+    var eteparcours;
+    $.getJSON("data/ete.geojson", function(json) {
+      eteparcours = L.geoJson(json,
+      {
+        style: eteStyle, onEachFeature: el2.addData.bind(el2)
+      }
+      ).addTo(tourEte);
+    });
+    <!-- Create JSON Markers for start and finish with popup -->
+    var hivertraguardo;
+    $.getJSON("data/hivertraguardo.geojson", function(json) {
+      hivertraguardo = L.geoJson(json,{
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup('<span>'+feature.properties.name+'</span>');
+        },
+      }).addTo(tourHiver);
+    });
+    var etetraguardo;
+    $.getJSON("data/etetraguardo.geojson", function(json) {
+      etetraguardo = L.geoJson(json,{
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup('<span>'+feature.properties.name+'</span>');
+        },
+      }).addTo(tourEte);
+    });
+    <!-- Create Markers using maki with popup -->
+    var partenzahivericon = L.MakiMarkers.icon({icon: "pitch", color: "#FEFF88", size: "m"});
+    L.marker([46.040182784199715, 8.735711351037025], {icon: partenzahivericon})
+    .bindPopup("<strong>Partenza Mini Trail</strong>").addTo(tourHiver);
+    var arrivohivericon = L.MakiMarkers.icon({icon: "embassy", color: "#FEFF88", size: "m"});
+    L.marker([46.101244362071157, 8.739905487746], {icon: arrivohivericon })
+    .bindPopup("<strong>Arrivo Mini Trail</strong>").addTo(tourHiver);
+    var partenzaeteicon = L.MakiMarkers.icon({icon: "pitch", color: "#FE9018", size: "m"});
+    L.marker([46.040250258520246, 8.735771114006639], {icon: partenzaeteicon})
+    .bindPopup("<strong>Partenza Trail</strong>").addTo(tourEte);
+    var arrivoeteicon = L.MakiMarkers.icon({icon: "embassy", color: "#FE9018", size: "m"});
+    L.marker([46.048197140917182, 8.736738888546824], {icon: arrivoeteicon })
+    .bindPopup("<strong>Arrivo Trail</strong>").addTo(tourEte);
+    el1.clear();
+    el2.clear();
+
+    <!--Add scalebar -->
+    L.control.scale({
+      position: 'bottomleft',
+      imperial: false
+    }).addTo(map);
+    <!--Add info -->
+    var info = L.control();
+    info.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+      this.update();
+      return this._div;
+    };
+    // method that we will use to update the control based on feature properties passed
+    //info.update = function (props) {
+      //this._div.innerHTML = '<h4><span style="text-align:center"><h2>Lago Maggiore Trail &#169 - 2014</h2></span>';
+      //};
+      //info.addTo(map);
+
+      $('#hiver').on("click", function() {
+
+        if (this.className === 'active') {
+
+          map.removeLayer(tourHiver);
+          var profileHiver = el1.getContainer(),
+            b = $('.leaflet-bottom.leaflet-left')[0];
+            setParent = function (element, newParent)
+            {
+              newParent.appendChild(element);
+            };
+          setParent(profileHiver, b);
+          map.removeControl(el1);
+          //map.removeControl(el1);
+          this.className = '';
+        } else {
+
+
+          map.addLayer(tourHiver);
+          map.addControl(el1);
+          map.setView([50.90795, 4.3935], 13);
+          this.className = 'active';
+          var profileHiver = el1.getContainer(),
+            a = document.getElementById('elContainer'),
+            setParent = function (element, newParent)
+            {
+              newParent.appendChild(element);
+            };
+          setParent(profileHiver, a);
+        }
+        return false;
+      } );
+      $('#ete').on("click", function() {
+        if (this.className === 'active') {
+
+          map.removeLayer(tourEte);
+          var profileEte = el2.getContainer(),
+            b = $('.leaflet-bottom.leaflet-left')[0];
+            setParent = function (element, newParent)
+            {
+              newParent.appendChild(element);
+            };
+          setParent(profileEte, b);
+          map.removeControl(el2);
+          this.className = '';
+        } else {
+
+          map.addLayer(tourEte);
+          map.addControl(el2);
+          map.setView([50.90795, 4.3935], 13);
+          this.className = 'active';
+          var profileEte = el2.getContainer(),
+            a = document.getElementById('elContainer'),
+            setParent = function (element, newParent)
+            {
+              newParent.appendChild(element);
+            };
+          setParent(profileEte, a);
+        }
+        return false;
+      } );
+    </script>
+  </script>
+</body>
+</html>

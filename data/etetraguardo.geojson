@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+
+"features": [
+{ "type": "Feature", "properties": { "track_fid": 0, "ele": 211.399994, "name": "PARTENZA", "ageofdgpsd": null, "dgpsid": null, "gpxtpx_Tra": "<gpxtpx:atemp>23.0<\/gpxtpx:atemp>" }, "geometry": { "type": "Point", "coordinates": [ 8.735771114006639, 46.040250258520246 ] } }
+]
+}

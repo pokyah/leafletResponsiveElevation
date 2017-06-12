@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+
+"features": [
+{ "type": "Feature", "properties": { "track_fid": 0, "track_seg_": 0, "track_se_1": 0, "ele": 30, "time": "2014\/09\/21", "name": "Départ" }, "geometry": { "type": "Point", "coordinates": [ 4.39339, 50.89967 ] } }
+]
+}
