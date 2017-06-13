@@ -316,12 +316,10 @@
       //this._div.innerHTML = '<h4><span style="text-align:center"><h2>Lago Maggiore Trail &#169 - 2014</h2></span>';
       //};
       //info.addTo(map);
+    var loadProfiles = function(){
+        if ($('#hiver').className === 'active') {
 
-      $('#hiver').on("click", function() {
-
-        if (this.className === 'active') {
-
-          map.removeLayer(tourHiver);
+          map.addLayer(tourHiver);
           var profileHiver = el1.getContainer(),
             b = $('.leaflet-bottom.leaflet-left')[0];
             setParent = function (element, newParent)
@@ -335,7 +333,7 @@
         } else {
 
 
-          map.addLayer(tourHiver);
+          map.removeLayer(tourHiver);
           map.addControl(el1);
           map.setView([50.90795, 4.3935], 13);
           this.className = 'active';
@@ -347,12 +345,10 @@
             };
           setParent(profileHiver, a);
         }
-        return false;
-      } );
-      $('#ete').on("click", function() {
-        if (this.className === 'active') {
 
-          map.removeLayer(tourEte);
+        if ( $('#ete').className === 'active') {
+
+          map.addLayer(tourEte);
           var profileEte = el2.getContainer(),
             b = $('.leaflet-bottom.leaflet-left')[0];
             setParent = function (element, newParent)
@@ -364,7 +360,7 @@
           this.className = '';
         } else {
 
-          map.addLayer(tourEte);
+          map.removeLayer(tourEte);
           map.addControl(el2);
           map.setView([50.90795, 4.3935], 13);
           this.className = 'active';
@@ -377,7 +373,12 @@
           setParent(profileEte, a);
         }
         return false;
-      } );
+
+
+    };
+
+    loadProfiles();
+
     </script>
   </script>
 </body>
